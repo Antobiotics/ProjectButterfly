@@ -1,0 +1,104 @@
+//Définition du domaine:
+
+
+border aa(t=0,0.8){x=t;y=0;label=1;};
+border b(t=3*pi/2,2*pi){x=0.8+0.1*cos(t);y=0.1+0.1*sin(t);label=1;};
+border c(t=0.1,0.8){x=0.9;y=t;label=1;};
+border d(t=0,pi/2){x=0.8+0.1*cos(t);y=0.8+0.1*sin(t);label=1;};
+border e(t=0,0.4){x=0.8-t;y=0.9-t/2;label=1;};
+border f(t=0,0.2){x=0.4-t;y=0.7-t;label=1;};
+border g(t=0.2,0){x=t;y=0.1+2*t;label=1;};
+border h(t=0.1,0){x=0;y=t;label=1;};
+mesh Th = buildmesh(aa(40)+b(7)+c(40)+d(7)+e(20)+f(15)+g(30)+h(5));
+
+/*
+border a(t=0;0.8){x=t;y=0;label=1;};
+border a(t=(3*pi/2,2*pi){x=t;y=0;label=1;};
+border a(t=0,1){x=t;y=0;label=1;};
+border a(t=0,1){x=t;y=0;label=1;};
+border a(t=0,1){x=t;y=0;label=1;};
+border a(t=0,1){x=t;y=0;label=1;};
+*/
+/*
+border b(t=0,1){x=t;y=0;label=1;};
+border d(t=0,1){x=1;y=t;label=1;};
+border h(t=0,1){x=1-t;y=1-t/2;label=1;};
+border g(t=0,1){x=0;y=(1-t)/2;label=1;};
+mesh Th = buildmesh(d(50)+h(50)+g(50/2)+b(50));
+
+*/
+
+
+/*
+border aa(t=1,0)  { x=0; y=t ;label=1;};        //  left beam
+border b(t=0,2) { x=t; y=0 ;label=1;};        //  bottom of beam
+border c(t=0,1)  { x=2; y=t ;label=1;};       //  rigth beam
+border d(t=0,2) { x=2-t; y=1; label=1;};//  top beam 
+border cirh(t=0,2*pi){x=0.8+0.1*cos(t);y=0.8+0.1*sin(t);label=1;};
+mesh Th = buildmesh(aa(50)+b(50)+c(50)+d(50)+cirh(-50));
+*/
+
+//load "msh3"
+//mesh3 Th("Th.mesh");
+//mesh Th("ailes_test_msh.msh");
+plot(Th,wait=1);
+fespace Vh(Th,P1);
+
+//Variables :
+Vh M,M0,I,I0,v,w,gg,g0;
+real gamma,k,dt,a,bb,dif;
+//dt=0.00001;
+//a=0.1;
+dt=0.01;
+a=0.00001;
+bb=50.0;
+dif=70.8473;
+//dif=50.8473;
+//dif=0.3;
+//k=0.5;
+k=0.001;
+gamma=619.45;
+I0=0.001;
+M0=0.001;
+
+//Le problème de l'activateur:
+problem Activator(M,v)=
+int2d(Th)(M*v/dt)-
+int2d(Th)(M0*v/dt)+
+int2d(Th)(dx(M)*dx(v)+dy(M)*dy(v))-
+int2d(Th)(gamma*(a)*v)-
+int2d(Th)(M*v*gamma*(M0/(I0*(1+k*M0*M0))))+
+int2d(Th)(M*v*gamma*(bb))
++on(1,M=0);
+
+//Résolution du problème:
+
+//Le problème de l'inhibiteur:
+problem Inhibitor(I,w)=
+int2d(Th)(I*w/dt)-
+int2d(Th)(I0*w/dt)-
+int2d(Th)(gamma*((M0*M0))*w)+
+int2d(Th)(I*w*gamma)+
+int2d(Th)(dif*(dx(I)*dx(w)+dy(I)*dy(w)));
+//+on(1,I=0);
+
+real nStep = 200;
+
+for(int i=1;i<nStep-2;i++){
+Inhibitor;
+I0=I;
+Activator;
+
+M0=M;
+plot(I,fill=1,value=1,wait=1);
+//plot(M,fill=1,value=1,wait=1);	
+}
+
+
+
+
+
+
+
+
+
